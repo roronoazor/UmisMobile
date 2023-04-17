@@ -1,143 +1,472 @@
 import React, { useState } from 'react';
-import {
-  View,
-  ImageBackground,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Text,
-  Image,
+import { 
+    StyleSheet,
+    Text,
+    View,
+    ScrollView,
+    TextInput,
+    TouchableOpacity, 
+    ActivityIndicator
 } from 'react-native';
+import Toast from 'react-native-simple-toast';
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import { primaryColor, stripedColor } from '../constants/colors';
+import {Picker} from '@react-native-picker/picker';
+import { fetchData, postData } from '../modules/utilQuery';
+import { useMutation, useQuery } from 'react-query';
+import { checkAndHandleAPIError } from '../modules/utilQuery';
+import { GET_PERSONAL_DETAILS } from '../config/serverUrls';
+import { useSelector } from 'react-redux';
+import UActivityIndicator from '../components/ActivityIndicatorComponent';
 
-const LoginScreen = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
-  const toggleShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
+const religionOptions = [
+    'Christianity',
+    'Islam',
+    'Traditional Religion',
+    'Other',
+  ];
+
+const statesOptions = [
+    'Abia',
+    'Adamawa',
+    'Akwa Ibom',
+    'Anambra',
+    'Bauchi',
+    'Bayelsa',
+    'Benue',
+    'Borno',
+    'Cross River',
+    'Delta',
+    'Ebonyi',
+    'Edo',
+    'Ekiti',
+    'Enugu',
+    'FCT - Abuja',
+    'Gombe',
+    'Imo',
+    'Jigawa',
+    'Kaduna',
+    'Kano',
+    'Katsina',
+    'Kebbi',
+    'Kogi',
+    'Kwara',
+    'Lagos',
+    'Nasarawa',
+    'Niger',
+    'Ogun',
+    'Ondo',
+    'Osun',
+    'Oyo',
+    'Plateau',
+    'Rivers',
+    'Sokoto',
+    'Taraba',
+    'Yobe',
+    'Zamfara',
+    'Not Nigerian',
+  ];
+
+
+const PersonalDetails = () => {
+  const [index, setIndex] = useState(0);
+  const [routes] = useState([
+    { key: 'personal', title: 'Personal Details' },
+    { key: 'degree', title: 'Degree Details' },
+    { key: 'edit', title: 'Review Details'}
+  ]);
+  const [userData, setUserData] = useState({});
+  const auth = useSelector(state => state.auth.auth);
+
+  
+  const RenderPersonalDetails = ({ userData }) => (
+    <ScrollView style={styles.container}>
+      <View style={styles.row}>
+        <Text style={styles.label}>Matric No.</Text>
+        <Text style={styles.value}>{userData?.matric_no}</Text>
+      </View>
+      <View style={[styles.row, styles.stripe]}>
+        <Text style={styles.label}>Student Name</Text>
+        <Text style={styles.value}>{userData?.user_data?.last_name} {userData?.user_data?.first_name}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Programme</Text>
+        <Text style={styles.value}>{userData?.programme}</Text>
+      </View>
+      <View style={[styles.row, styles.stripe]}>
+        <Text style={styles.label}>Department</Text>
+        <Text style={styles.value}>{userData?.department}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Entry Level</Text>
+        <Text style={styles.value}>{userData?.entry_level}</Text>
+      </View>
+      <View style={[styles.row, styles.stripe]}>
+        <Text style={styles.label}>Study Level</Text>
+        <Text style={styles.value}>{userData?.study_level}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Religion</Text>
+        <Text style={styles.value}>{userData?.religion}</Text>
+      </View>
+      <View style={[styles.row, styles.stripe]}>
+        <Text style={styles.label}>Denomination</Text>
+        <Text style={styles.value}>{userData?.denomination}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Sex</Text>
+        <Text style={styles.value}>{userData?.sex}</Text>
+      </View>
+      <View style={[styles.row, styles.stripe]}>
+        <Text style={styles.label}>Marital Status</Text>
+        <Text style={styles.value}>{userData?.marital_status}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Nationality</Text>
+        <Text style={styles.value}>{userData?.nationality}</Text>
+      </View>
+      <View style={[styles.row, styles.stripe]}>
+        <Text style={styles.label}>Address</Text>
+        <Text style={styles.value}>{userData?.address}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Town</Text>
+        <Text style={styles.value}>{userData?.town}</Text>
+      </View>
+      <View style={[styles.row, styles.stripe]}>
+        <Text style={styles.label}>Country</Text>
+        <Text style={styles.value}>{userData?.country}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>On Probation</Text>
+        <Text style={styles.value}>{userData?.on_probation}</Text>
+      </View>
+      <View style={[styles.row, styles.stripe]}>
+        <Text style={styles.label}>Off Campus</Text>
+        <Text style={styles.value}>{userData?.off_campus}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>School Details</Text>
+        <Text style={styles.value}>{userData?.school_details}</Text>
+      </View>
+      <View style={[styles.row, styles.stripe]}>
+        <Text style={styles.label}>Department Details</Text>
+        <Text style={styles.value}>{userData?.department_details}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Account Number</Text>
+        <Text style={styles.value}>{userData?.account_number}</Text>
+      </View>
+      <View style={[styles.row, styles.stripe]}>
+        <Text style={styles.label}>ETranzact Card Number</Text>
+        <Text style={styles.value}>{userData?.etranzact_number}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Email</Text>
+        <Text style={styles.value}>{userData?.user_data?.email}</Text>
+      </View>
+    </ScrollView>
+  );
+
+  const RenderDegreeDetails = ({ userData }) => (
+    <ScrollView style={styles.container}>
+      <View style={[styles.row, styles.stripe]}>
+        <Text style={styles.label}>Level</Text>
+        <Text style={styles.value}>{userData?.level}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Sub</Text>
+        <Text style={styles.value}>{userData?.sub}</Text>
+      </View>
+      <View style={[styles.row, styles.stripe]}>
+        <Text style={styles.label}>Degree</Text>
+        <Text style={styles.value}>{userData?.degree}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Department</Text>
+        <Text style={styles.value}>{userData?.department}</Text>
+      </View>
+      <View style={[styles.row, styles.stripe]}>
+        <Text style={styles.label}>Programme</Text>
+        <Text style={styles.value}>{userData?.programme}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Core Area</Text>
+        <Text style={styles.value}>Yes</Text>
+      </View>
+    </ScrollView>
+  );
+
+  const RenderEditReviewDetails = ({ userData, auth }) => {
+    const [mobileNo, setMobileNo] = useState(userData?.mobile_number);
+    const [telNo, setTelNo] = useState(userData?.telephone_number);
+    const [email, setEmail] = useState(userData?.user_data?.email);
+    const [address, setAddress] = useState(userData?.address);
+    const [zipCode, setZipCode] = useState(userData?.zip_code);
+    const [town, setTown] = useState(userData?.town);
+    const [religion, setReligion] = useState(userData?.religion);
+    const [state, setState] = useState(userData?.state);
+    const { mutate, isLoading } = useMutation(postData, {
+      onSuccess: ({ data }) => {
+        Toast.show('Success', Toast.LONG);
+      },
+      onError: (error) => {
+       checkAndHandleAPIError(error); 
+      }
+    });
+
+
+    const handleSubmit = () => {
+        // Save the form data here
+        console.log({
+          mobileNo,
+          telNo,
+          email,
+          address,
+          zipCode,
+          town,
+          religion,
+          state,
+        });
+
+        const payload_data = {
+          mobile_number: mobileNo,
+          telephone_number: telNo,
+          email,
+          address,
+          zip_code: zipCode,
+          town,
+          religion,
+          state
+        }
+
+        mutate({
+          url: GET_PERSONAL_DETAILS,
+          data: payload_data,
+          authenticate: true,
+          token: auth.token
+        });
+      };
+
+      return (
+        <View style={styles.container}>
+          <View style={styles.row}>
+            <Text style={styles.label}>Mobile No.</Text>
+            <TextInput
+              style={styles.input}
+              value={mobileNo}
+              onChangeText={setMobileNo}
+              keyboardType="phone-pad"
+            />
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Tel No.</Text>
+            <TextInput
+              style={styles.input}
+              value={telNo}
+              onChangeText={setTelNo}
+              keyboardType="phone-pad"
+            />
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+            />
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Address</Text>
+            <TextInput
+              style={styles.input}
+              value={address}
+              onChangeText={setAddress}
+            />
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Zip Code</Text>
+            <TextInput
+              style={styles.input}
+              value={zipCode}
+              onChangeText={setZipCode}
+              keyboardType="numeric"
+            />
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Town</Text>
+            <TextInput
+              style={styles.input}
+              value={town}
+              onChangeText={setTown}
+            />
+          </View>
+          <View style={styles.row}>
+               <Text style={styles.label}>Religious Affiliation</Text>
+                <Picker
+                style={styles.picker}
+                selectedValue={religion}
+                onValueChange={setReligion}
+                >
+                  {religionOptions.map((religion, index) => {
+                    return <Picker.Item key={index} label={religion} value={religion} />
+                  })}
+                </Picker>
+          </View>
+          <View style={styles.row}>
+               <Text style={styles.label}>State of Origin/LGA:</Text>
+                <Picker
+                style={styles.picker}
+                selectedValue={state}
+                onValueChange={setState}
+                >
+                  {statesOptions.map((state, index) => {
+                    return <Picker.Item key={index} label={state} value={state} />
+                  })}
+                </Picker>
+          </View>
+          <View style={{ flex: 1, alignItems: 'center', padding: 10, backgroundColor: '#fff'}}>
+            {
+              isLoading ? 
+              (
+                <TouchableOpacity style={styles.button}>
+                  <ActivityIndicator size="small" color="#000000" />
+                </TouchableOpacity>
+              ) :
+              (
+                <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+                  <Text style={styles.buttonText}>Save</Text>    
+                </TouchableOpacity>
+              )
+            }
+         </View>
+        </View>
+      )
+  }
+
+  const renderScene = SceneMap({
+    personal: () => <RenderPersonalDetails userData={userData} />,
+    degree: () => <RenderDegreeDetails userData={userData} />,
+    edit: () => <RenderEditReviewDetails userData={userData} auth={auth} />
+  });
+
+  let payload_data = {};
+  const {  isLoading, isError, data, error, isFetching } = useQuery(['personalDetails',
+                          { 
+                            url: GET_PERSONAL_DETAILS,
+                            payload_data,
+                            authenticate:true,
+                            token: auth.token
+                           }],
+                          fetchData, 
+                          {
+                            retry:false,
+                            onSuccess: ({ data }) => {
+                              setUserData(data?.detail);
+                            },
+                            onError: (error) => {
+                              checkAndHandleAPIError(error)
+                            }
+                          }
+                          );
+
+  if (isLoading) {
+    return (
+      <UActivityIndicator />
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <ImageBackground
-        // source={require('./background-image.jpg')}
-        source={{uri: 'https://reactjs.org/logo-og.png'}}
-        resizeMode="cover"
-        style={styles.imageBackground}
-      >
-        <View style={styles.logoContainer}>
-          <Image
-            // source={require('./school-logo.png')}
-            source={{uri: 'https://reactjs.org/logo-og.png'}}
-            resizeMode="contain"
-            style={styles.logo}
-          />
-        </View>
-        <View style={styles.formContainer}>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Username"
-              placeholderTextColor="#808080"
-              onChangeText={setUsername}
-              value={username}
+    <>
+        {/* <AppHeader title="Welcome Isaac" /> */}
+        <TabView
+        navigationState={{ index, routes }}
+        renderScene={renderScene}
+        onIndexChange={setIndex}
+        initialLayout={styles.tabView}
+        renderTabBar={(props) => (
+            <TabBar
+            {...props}
+            indicatorStyle={styles.indicator}
+            style={styles.tabBar}
+            labelStyle={styles.tabLabel}
             />
-          </View>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#808080"
-              secureTextEntry={!showPassword}
-              onChangeText={setPassword}
-              value={password}
-            />
-            <TouchableOpacity
-              style={styles.showPasswordButton}
-              onPress={toggleShowPassword}
-            >
-              <Text style={styles.showPasswordButtonText}>
-                {showPassword ? 'Hide' : 'Show'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity style={styles.forgotPasswordButton}>
-            <Text style={styles.forgotPasswordButtonText}>
-              Forgot Password?
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.loginButton}>
-            <Text style={styles.loginButtonText}>Login</Text>
-          </TouchableOpacity>
-        </View>
-      </ImageBackground>
-    </View>
+        )}
+        />
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 1
   },
-  imageBackground: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoContainer: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  logo: {
-    height: 100,
-    width: '80%',
-    maxWidth: 300,
-  },
-  formContainer: {
-    flex: 2,
-    justifyContent: 'center',
-    width: '80%',
-    maxWidth: 300,
-  },
-  inputContainer: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 10,
+    justifyContent: 'space-between',
+    padding: 10,
+    backgroundColor: '#ffffff'
+  },
+  stripe: {
+    backgroundColor: stripedColor
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    marginRight: 16,
+  },
+value: {
+    fontSize: 16,
+    color: '#000',
+  },
+  tabView: {
+    width: '100%',
+  },
+  tabLabel: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+    textTransform: 'capitalize',
+  },
+  tabIndicator: {
+    backgroundColor: primaryColor,
+    height: 4,
+    borderRadius: 4,
+  },
+  tabBar: {
+    backgroundColor: primaryColor,
   },
   input: {
-    flex: 1,
-    height: 40,
-    backgroundColor: '#ffffff',
+    height: 30,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'gray',
     paddingHorizontal: 10,
-    borderRadius: 5,
   },
-  showPasswordButton: {
-    padding: 10,
+  button: {
+    backgroundColor: primaryColor,
+    padding: 16,
+    minWidth: 150,
+    borderRadius: 10
   },
-  showPasswordButtonText: {
+  buttonText: {
     color: '#ffffff',
+    fontSize: 18,
     fontWeight: 'bold',
+    textAlign: 'center'
   },
-  forgotPasswordButton: {
-    alignSelf: 'flex-end',
-    marginVertical: 10,
-  },
-  forgotPasswordButtonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-  },
-  loginButton: {
-    backgroundColor: '#ffffff',
-    padding: 10,
+  picker: {
+    flex: 2,
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 5,
     borderRadius: 5,
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-  loginButtonText: {
-    color: '#000000',
-    fontWeight: 'bold',
-  },
+    paddingHorizontal: 10,
+  }
 });
 
-export default LoginScreen;
+export default PersonalDetails;

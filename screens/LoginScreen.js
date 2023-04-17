@@ -8,16 +8,68 @@ import {
   Text,
   Image,
   StatusBar,
+  ActivityIndicator
 } from 'react-native';
+import { checkAndHandleAPIError } from '../modules/utilQuery';
+import { BackHandler, Alert } from "react-native";
+import { useMutation } from 'react-query';
+import { postData } from '../modules/utilQuery';
+import { storeData } from '../modules/utilFunctions';
+import Toast from 'react-native-simple-toast';
+import { LOGIN_URL } from '../config/serverUrls';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../features/authSlice';
 
-const LoginScreen = () => {
+const LoginScreen = (props) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-  
+    const { navigation } = props;
+    const dispatch = useDispatch();
+
     const toggleShowPassword = () => {
       setShowPassword(!showPassword);
     };
+
+    const backAction = () => {
+      BackHandler.removeEventListener("hardwareBackPress", backAction);
+      BackHandler.exitApp();
+
+      return true;
+    };
+  
+    React.useEffect(() => {
+      const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
+  
+      return () => {console.log("removing backhandler"); backHandler.remove();}
+    }, []);
+
+    const { mutate, isLoading } = useMutation(postData, {
+      onSuccess: ({ data }) => {
+        storeData(data);
+        dispatch(setUser(data));
+        navigation.navigate("Drawer");
+        Toast.show('Login Successful', Toast.LONG);
+      },
+      onError: (error) => {
+       checkAndHandleAPIError(error); 
+      }
+    });
+
+    const handleSubmit = () => {
+      if (!username || !password) {
+        Toast.show(`Please fill all required fields`, Toast.LONG);  
+        return;
+      }
+
+      const data = {username, password}
+
+      mutate({
+        url: LOGIN_URL, 
+        payload_data: data
+      })
+
+    }
   
     return (
       <SafeAreaView style={styles.container}>
@@ -62,9 +114,17 @@ const LoginScreen = () => {
               Forgot Password?
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.loginButton, { width: '50%' }]}>
-            <Text style={styles.loginButtonText}>Login</Text>
-          </TouchableOpacity>
+          {
+            isLoading ? (
+              <TouchableOpacity style={[styles.loginButton, { width: '50%' }]}>
+                <ActivityIndicator size="small" color="#000000" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={[styles.loginButton, { width: '50%' }]} onPress={handleSubmit}>
+                <Text style={styles.loginButtonText}>Login</Text>
+              </TouchableOpacity>
+            )
+          }
         </View>
       </SafeAreaView>
     );
