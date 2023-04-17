@@ -13,7 +13,6 @@ import UActivityIndicator from '../components/ActivityIndicatorComponent';
 const Table = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
-  const [data, setData] = useState([]);
   const [mealTypes, setMealTypes] = useState([]);
   const [userMealTypes, setUserMealTypes] = useState([]);
   const auth = useSelector(state => state.auth.auth);
@@ -48,7 +47,9 @@ const Table = () => {
   const handleSubmit = () => {
     mutate({
       url: GET_USER_MEAL_TYPES, 
-      payload_data: selectedItems
+      payload_data: selectedItems,
+      authenticate: true,
+      token: auth?.token
     })
   }
 
@@ -192,13 +193,3 @@ const styles = StyleSheet.create({
 });
 
 export default Table;
-
-
-const data = [
-  { id:1, selection: 'Off Campus', details: 'Select to be an off campus student, this is subject to approval by the students affairs dean.' },
-  { id:2, selection: 'Breakfast and Lunch', details: 'Select for a resident student who takes breakfast and Lunch.' },
-  { id:3, selection: 'Breakfast and Supper', details: 'Select this for a resident student who takes Breafast and Supper.' },
-  { id:4, selection: 'Lunch and Supper', details: 'Select this for a resident student who takes Lunch and Supper.' },
-  { id:5, selection: 'Breakfast, Lunch and Supper', details: 'Select this for a resident student taking breakfast lunch and supper.' }
-];
-

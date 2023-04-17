@@ -1,11 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { 
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator
+} from 'react-native';
 import BouncyCheckbox from "react-native-bouncy-checkbox";
 import { primaryColor, stripedColor } from '../constants/colors';
+
+import { fetchData, postData } from '../modules/utilQuery';
+import { useMutation, useQuery } from 'react-query';
+import { checkAndHandleAPIError } from '../modules/utilQuery';
+import { GET_USER_RESIDENCE_TYPES } from '../config/serverUrls';
+import { useSelector } from 'react-redux';
+import UActivityIndicator from '../components/ActivityIndicatorComponent';
+
 
 const ResidenceScreen = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [residenceTypes, setResidenceTypes] = useState([]);
+  const [userResidenceTypes, setUserResidenceTypes] = useState([]);
+  const auth = useSelector(state => state.auth.auth);
 
   const handleSelectAll = () => {
     setSelectAll(!selectAll);
@@ -24,7 +42,59 @@ const ResidenceScreen = () => {
     }
   };
 
+  const { mutate, isLoading: mutationLoading } = useMutation(postData, {
+    onSuccess: ({ data }) => {
+      Toast.show('Saved', Toast.LONG);
+    },
+    onError: (error) => {
+     checkAndHandleAPIError(error); 
+    }
+  });
+
+  const handleSubmit = () => {
+    mutate({
+      url: GET_USER_RESIDENCE_TYPES, 
+      payload_data: selectedItems,
+      authenticate: true,
+      token: auth?.token
+    })
+  }
+
+  let payload_data = {};
+  const {  isLoading, isError, error, isFetching } = useQuery(['personalDetails',
+                          { 
+                            url: GET_USER_RESIDENCE_TYPES,
+                            payload_data,
+                            authenticate:true,
+                            token: auth.token
+                           }],
+                          fetchData, 
+                          {
+                            retry:false,
+                            onSuccess: ({ data }) => {
+                              console.log('d: ', data);
+                              const { detail: { residences, user_residences } } = data;
+                              setResidenceTypes(residences);
+                              setUserResidenceTypes(user_residences);
+                              let userResidenceIds = user_residences.map(residence=>residence.residence)
+                              setSelectedItems(userResidenceIds);
+                            },
+                            onError: (error) => {
+                              console.log('e: ', error);
+                              checkAndHandleAPIError(error)
+                            }
+                          }
+                          );
+
+  if (isLoading) {
+    return (
+      <UActivityIndicator />
+    );
+  }
+
+
   return (
+    <>
     <ScrollView>
         <ScrollView horizontal={true}>
             <View style={styles.table}>
@@ -49,7 +119,7 @@ const ResidenceScreen = () => {
                 <Text style={[styles.headerText, styles.alignCenter, { width:120 }]}>Minimum Level</Text>
                 <Text style={[styles.headerText, styles.alignCenter, { width:120 }]}>Maximum Level</Text>
             </View>
-            {data.map((item, index) => (
+            {residenceTypes.map((item, index) => (
                 <View style={ index % 2 == 0 ? styles.row : [styles.row, styles.stripedRow]} key={item.id}>
                 <BouncyCheckbox 
                     isChecked={selectedItems.includes(item.id)}
@@ -63,17 +133,34 @@ const ResidenceScreen = () => {
                     borderRadius: 0,
                     }}
                 />
-                <Text style={[styles.text, styles.alignCenter]}>{item.residenceId}</Text>
-                <Text style={[styles.text, styles.alignCenter, { width: 200 }]}>{item.residenceName}</Text>
+                <Text style={[styles.text, styles.alignCenter]}>{item.id}</Text>
+                <Text style={[styles.text, styles.alignCenter, { width: 200 }]}>{item.residence_name}</Text>
                 <Text style={[styles.text, styles.alignCenter, { width:60 }]}>{item.capacity}</Text>
-                <Text style={[styles.text, styles.alignCenter, { width:120 }]}>{item.availableSpace}</Text>
-                <Text style={[styles.text, styles.alignCenter, { width:120 }]}>{item.minimumLevel}</Text>
-                <Text style={[styles.text, styles.alignCenter, { width:120 }]}>{item.maximumLevel}</Text>
+                <Text style={[styles.text, styles.alignCenter, { width:120 }]}>{item.available_space}</Text>
+                <Text style={[styles.text, styles.alignCenter, { width:120 }]}>{item.minimum_level}</Text>
+                <Text style={[styles.text, styles.alignCenter, { width:120 }]}>{item.maximum_level}</Text>
                 </View>
             ))}
             </View>
         </ScrollView>
+        <View style={{  alignItems: 'center', padding: 10, backgroundColor: '#fff'}}>
+     {
+       mutationLoading ? 
+       (
+         <TouchableOpacity style={styles.button}>
+           <ActivityIndicator size="small" color="#000000" />
+         </TouchableOpacity>
+       ) :
+       (
+         <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+           <Text style={styles.buttonText}>Save</Text>    
+         </TouchableOpacity>
+       )
+     }
+    </View>
     </ScrollView>
+    
+  </>
   );
 
 };
@@ -138,6 +225,18 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
     textAlign: 'center',
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center'
+  },
+  button: {
+    backgroundColor: primaryColor,
+    padding: 16,
+    minWidth: 150,
+    borderRadius: 10
   },
 });
 

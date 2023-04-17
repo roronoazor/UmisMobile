@@ -1,11 +1,31 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { 
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator
+} from 'react-native';
 import BouncyCheckbox from "react-native-bouncy-checkbox";
 import { primaryColor, stripedColor } from '../constants/colors';
+
+import { fetchData, postData } from '../modules/utilQuery';
+import { useMutation, useQuery } from 'react-query';
+import { checkAndHandleAPIError } from '../modules/utilQuery';
+import { GET_USER_WORSHIP_CENTER_TYPES } from '../config/serverUrls';
+import { useSelector } from 'react-redux';
+import UActivityIndicator from '../components/ActivityIndicatorComponent';
+
+
 
 const WorshipScreen = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [worshipTypes, setWorshipTypes] = useState([]);
+  const [userWorshipTypes, setUserWorshipTypes] = useState([]);
+  const auth = useSelector(state => state.auth.auth);
+
 
   const handleSelectAll = () => {
     setSelectAll(!selectAll);
@@ -23,6 +43,56 @@ const WorshipScreen = () => {
       setSelectedItems([...selectedItems, itemId]);
     }
   };
+
+  const { mutate, isLoading: mutationLoading } = useMutation(postData, {
+    onSuccess: ({ data }) => {
+      Toast.show('Saved', Toast.LONG);
+    },
+    onError: (error) => {
+     checkAndHandleAPIError(error); 
+    }
+  });
+
+  const handleSubmit = () => {
+    mutate({
+      url: GET_USER_WORSHIP_CENTER_TYPES, 
+      payload_data: selectedItems,
+      authenticate: true,
+      token: auth?.token
+    })
+  }
+
+  let payload_data = {};
+  const {  isLoading } = useQuery(['personalDetails',
+                          { 
+                            url: GET_USER_WORSHIP_CENTER_TYPES,
+                            payload_data,
+                            authenticate:true,
+                            token: auth.token
+                           }],
+                          fetchData, 
+                          {
+                            retry:false,
+                            onSuccess: ({ data }) => {
+                              const { detail: { worships, user_worships } } = data;
+                              setWorshipTypes(worships);
+                              setUserWorshipTypes(user_worships);
+                              let userWorshipIds = user_worships.map(worship=>worship.worship_center)
+                              setSelectedItems(userWorshipIds);
+                            },
+                            onError: (error) => {
+                              console.log('e: ', error);
+                              checkAndHandleAPIError(error)
+                            }
+                          }
+                          );
+
+  if (isLoading) {
+    return (
+      <UActivityIndicator />
+    );
+  }
+
 
   return (
     <ScrollView>
@@ -47,7 +117,7 @@ const WorshipScreen = () => {
                 <Text style={[styles.headerText, styles.alignCenter, { width: 150 }]}>Pastor in Charge</Text>
                 <Text style={[styles.headerText, styles.alignCenter, { width: 80 }]}>Space Left</Text>
             </View>
-            {data.map((item, index) => (
+            {worshipTypes.map((item, index) => (
                 <View style={ index % 2 == 0 ? styles.row : [styles.row, styles.stripedRow]} key={item.id}>
                 <BouncyCheckbox 
                     isChecked={selectedItems.includes(item.id)}
@@ -61,14 +131,29 @@ const WorshipScreen = () => {
                     borderRadius: 0,
                     }}
                 />
-                <Text style={[styles.text, styles.alignCenter, { width: 200 }]}>{item.worshipCenter}</Text>
-                <Text style={[styles.text, styles.alignCenter, { width: 160 }]}>{item.campusLocation}</Text>
-                <Text style={[styles.text, styles.alignCenter, { width: 150 }]}>{item.pastor}</Text>
-                <Text style={[styles.text, styles.alignCenter, { width: 80 }]}>{item.spaceLeft}</Text>
+                <Text style={[styles.text, styles.alignCenter, { width: 200 }]}>{item?.worship_center}</Text>
+                <Text style={[styles.text, styles.alignCenter, { width: 160 }]}>{item?.location_on_campus}</Text>
+                <Text style={[styles.text, styles.alignCenter, { width: 150 }]}>{item?.pastor_in_charge}</Text>
+                <Text style={[styles.text, styles.alignCenter, { width: 80 }]}>{item?.space_left}</Text>
                 </View>
             ))}
             </View>
         </ScrollView>
+        <View style={{  alignItems: 'center', padding: 10, backgroundColor: '#fff'}}>
+          {
+            mutationLoading ? 
+            (
+              <TouchableOpacity style={styles.button}>
+                <ActivityIndicator size="small" color="#000000" />
+              </TouchableOpacity>
+            ) :
+            (
+              <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+                <Text style={styles.buttonText}>Save</Text>    
+              </TouchableOpacity>
+            )
+          }
+          </View>
     </ScrollView>
   );
 
@@ -150,6 +235,18 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
     textAlign: 'center',
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center'
+  },
+  button: {
+    backgroundColor: primaryColor,
+    padding: 16,
+    minWidth: 150,
+    borderRadius: 10
   },
 });
 
