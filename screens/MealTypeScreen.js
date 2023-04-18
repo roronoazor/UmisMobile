@@ -9,6 +9,7 @@ import { checkAndHandleAPIError } from '../modules/utilQuery';
 import { GET_USER_MEAL_TYPES } from '../config/serverUrls';
 import { useSelector } from 'react-redux';
 import UActivityIndicator from '../components/ActivityIndicatorComponent';
+import { useQueryClient } from 'react-query';
 
 const Table = () => {
   const [selectAll, setSelectAll] = useState(false);
@@ -16,6 +17,7 @@ const Table = () => {
   const [mealTypes, setMealTypes] = useState([]);
   const [userMealTypes, setUserMealTypes] = useState([]);
   const auth = useSelector(state => state.auth.auth);
+  const queryClient = useQueryClient();
 
 
   const handleSelectAll = () => {
@@ -38,6 +40,7 @@ const Table = () => {
   const { mutate, isLoading: mutationLoading } = useMutation(postData, {
     onSuccess: ({ data }) => {
       Toast.show('Saved', Toast.LONG);
+      queryClient.invalidateQueries('mealTypes');
     },
     onError: (error) => {
      checkAndHandleAPIError(error); 
@@ -47,14 +50,14 @@ const Table = () => {
   const handleSubmit = () => {
     mutate({
       url: GET_USER_MEAL_TYPES, 
-      payload_data: selectedItems,
+      payload_data: { ids: selectedItems },
       authenticate: true,
       token: auth?.token
     })
   }
 
   let payload_data = {};
-  const {  isLoading, isError, error, isFetching } = useQuery(['personalDetails',
+  const {  isLoading, isError, error, isFetching } = useQuery(['mealTypes',
                           { 
                             url: GET_USER_MEAL_TYPES,
                             payload_data,

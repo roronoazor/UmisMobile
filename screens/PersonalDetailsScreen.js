@@ -18,7 +18,7 @@ import { checkAndHandleAPIError } from '../modules/utilQuery';
 import { GET_PERSONAL_DETAILS } from '../config/serverUrls';
 import { useSelector } from 'react-redux';
 import UActivityIndicator from '../components/ActivityIndicatorComponent';
-
+import { useQueryClient } from 'react-query';
 
 const religionOptions = [
     'Christianity',
@@ -164,7 +164,7 @@ const PersonalDetails = () => {
       </View>
       <View style={styles.row}>
         <Text style={styles.label}>Email</Text>
-        <Text style={styles.value}>{userData?.user_data?.email}</Text>
+        <Text style={styles.value}>{userData?.email}</Text>
       </View>
     </ScrollView>
   );
@@ -207,9 +207,11 @@ const PersonalDetails = () => {
     const [town, setTown] = useState(userData?.town);
     const [religion, setReligion] = useState(userData?.religion);
     const [state, setState] = useState(userData?.state);
+    const queryClient = useQueryClient();
     const { mutate, isLoading } = useMutation(postData, {
       onSuccess: ({ data }) => {
         Toast.show('Success', Toast.LONG);
+        queryClient.invalidateQueries('personalDetails')
       },
       onError: (error) => {
        checkAndHandleAPIError(error); 
@@ -219,16 +221,6 @@ const PersonalDetails = () => {
 
     const handleSubmit = () => {
         // Save the form data here
-        console.log({
-          mobileNo,
-          telNo,
-          email,
-          address,
-          zipCode,
-          town,
-          religion,
-          state,
-        });
 
         const payload_data = {
           mobile_number: mobileNo,

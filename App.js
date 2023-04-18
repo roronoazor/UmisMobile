@@ -224,7 +224,7 @@ function DrawerNavigator({ navigation }) {
         title: "Select Worship Center"
       }}
     />
-    <Drawer.Screen
+    {/* <Drawer.Screen
       name="SelectCourses"
       component={SelectCoursesScreen}
       options={{
@@ -234,7 +234,7 @@ function DrawerNavigator({ navigation }) {
         ),
         title: "Select Courses"
       }}
-    />
+    /> */}
     <Drawer.Screen
       name="SubmitRegistration"
       component={SubmitRegistrationScreen}

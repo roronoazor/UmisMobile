@@ -16,7 +16,7 @@ import { checkAndHandleAPIError } from '../modules/utilQuery';
 import { GET_USER_RESIDENCE_TYPES } from '../config/serverUrls';
 import { useSelector } from 'react-redux';
 import UActivityIndicator from '../components/ActivityIndicatorComponent';
-
+import { useQueryClient } from 'react-query';
 
 const ResidenceScreen = () => {
   const [selectAll, setSelectAll] = useState(false);
@@ -24,6 +24,7 @@ const ResidenceScreen = () => {
   const [residenceTypes, setResidenceTypes] = useState([]);
   const [userResidenceTypes, setUserResidenceTypes] = useState([]);
   const auth = useSelector(state => state.auth.auth);
+  const queryClient = useQueryClient();
 
   const handleSelectAll = () => {
     setSelectAll(!selectAll);
@@ -45,6 +46,7 @@ const ResidenceScreen = () => {
   const { mutate, isLoading: mutationLoading } = useMutation(postData, {
     onSuccess: ({ data }) => {
       Toast.show('Saved', Toast.LONG);
+      queryClient.invalidateQueries('residences');
     },
     onError: (error) => {
      checkAndHandleAPIError(error); 
@@ -54,14 +56,14 @@ const ResidenceScreen = () => {
   const handleSubmit = () => {
     mutate({
       url: GET_USER_RESIDENCE_TYPES, 
-      payload_data: selectedItems,
+      payload_data: { ids: selectedItems },
       authenticate: true,
       token: auth?.token
     })
   }
 
   let payload_data = {};
-  const {  isLoading, isError, error, isFetching } = useQuery(['personalDetails',
+  const {  isLoading, isError, error, isFetching } = useQuery(['residences',
                           { 
                             url: GET_USER_RESIDENCE_TYPES,
                             payload_data,

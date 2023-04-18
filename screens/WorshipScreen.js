@@ -16,7 +16,7 @@ import { checkAndHandleAPIError } from '../modules/utilQuery';
 import { GET_USER_WORSHIP_CENTER_TYPES } from '../config/serverUrls';
 import { useSelector } from 'react-redux';
 import UActivityIndicator from '../components/ActivityIndicatorComponent';
-
+import { useQueryClient } from 'react-query';
 
 
 const WorshipScreen = () => {
@@ -25,7 +25,7 @@ const WorshipScreen = () => {
   const [worshipTypes, setWorshipTypes] = useState([]);
   const [userWorshipTypes, setUserWorshipTypes] = useState([]);
   const auth = useSelector(state => state.auth.auth);
-
+  const queryClient = useQueryClient();
 
   const handleSelectAll = () => {
     setSelectAll(!selectAll);
@@ -47,6 +47,7 @@ const WorshipScreen = () => {
   const { mutate, isLoading: mutationLoading } = useMutation(postData, {
     onSuccess: ({ data }) => {
       Toast.show('Saved', Toast.LONG);
+      queryClient.invalidateQueries('worship');
     },
     onError: (error) => {
      checkAndHandleAPIError(error); 
@@ -56,14 +57,14 @@ const WorshipScreen = () => {
   const handleSubmit = () => {
     mutate({
       url: GET_USER_WORSHIP_CENTER_TYPES, 
-      payload_data: selectedItems,
+      payload_data: { ids: selectedItems },
       authenticate: true,
       token: auth?.token
     })
   }
 
   let payload_data = {};
-  const {  isLoading } = useQuery(['personalDetails',
+  const {  isLoading } = useQuery(['worship',
                           { 
                             url: GET_USER_WORSHIP_CENTER_TYPES,
                             payload_data,

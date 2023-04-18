@@ -13,3 +13,5 @@ export const GET_USER_MEAL_TYPES = `${BASE_URL}api/core/user_meal_types/`;
 export const GET_USER_RESIDENCE_TYPES = `${BASE_URL}api/core/user_residences/`;
 
 export const GET_USER_WORSHIP_CENTER_TYPES = `${BASE_URL}api/core/user_worship_centers/`;
+
+export const GET_SUBMIT_REGISTRATION = `${BASE_URL}api/core/submit_registration/`;
