@@ -201,7 +201,7 @@ const PersonalDetails = () => {
   const RenderEditReviewDetails = ({ userData, auth }) => {
     const [mobileNo, setMobileNo] = useState(userData?.mobile_number);
     const [telNo, setTelNo] = useState(userData?.telephone_number);
-    const [email, setEmail] = useState(userData?.user_data?.email);
+    const [email, setEmail] = useState(userData?.email);
     const [address, setAddress] = useState(userData?.address);
     const [zipCode, setZipCode] = useState(userData?.zip_code);
     const [town, setTown] = useState(userData?.town);
@@ -211,6 +211,7 @@ const PersonalDetails = () => {
     const { mutate, isLoading } = useMutation(postData, {
       onSuccess: ({ data }) => {
         Toast.show('Success', Toast.LONG);
+        setIndex(0);
         queryClient.invalidateQueries('personalDetails')
       },
       onError: (error) => {
@@ -235,7 +236,7 @@ const PersonalDetails = () => {
 
         mutate({
           url: GET_PERSONAL_DETAILS,
-          data: payload_data,
+          payload_data,
           authenticate: true,
           token: auth.token
         });
@@ -345,7 +346,7 @@ const PersonalDetails = () => {
   });
 
   let payload_data = {};
-  const {  isLoading, isError, data, error, isFetching } = useQuery(['personalDetails',
+  const {  isLoading } = useQuery(['personalDetails',
                           { 
                             url: GET_PERSONAL_DETAILS,
                             payload_data,

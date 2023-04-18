@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import BouncyCheckbox from "react-native-bouncy-checkbox";
 import { primaryColor, stripedColor } from '../constants/colors';
-
+import Toast from "react-native-simple-toast";
 import { fetchData, postData } from '../modules/utilQuery';
 import { useMutation, useQuery } from 'react-query';
 import { checkAndHandleAPIError } from '../modules/utilQuery';
